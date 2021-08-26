@@ -1,33 +1,71 @@
 import random
+import copy
+import numpy as np
+import matplotlib.pyplot as plt
+'''
+0 - cell is dead
+1 - cell is alive
+'''
 
 
-def mix_words(text):
-    list_words = text.split()
-    for id_, word in enumerate(list_words):
-        list_words[id_] = list(word)
-        queue = []
-        queue.append(list_words[id_].pop(0))
-        len_word = len(list_words[id_])
-        while len_word > 1:
-            rand_int = random.randint(0, len_word - 2)
-            queue.append(list_words[id_].pop(rand_int))
-            len_word = len(list_words[id_])
-        if len_word > 0:
-            queue.append(list_words[id_].pop(0))
-        list_words[id_] = ''.join(queue)
-    list_words = ' '.join(list_words)
-    print(list_words + '\n')
+def create_matrix(size):
+    M = []
+    for i in range(size):
+        M.append([0 for e in range(size)])
+    return M
 
 
-text_1 = "Я сегодня был в Москве"
-text_2 = "Возьмите свои вещи из открывшейся ячейки"
-text_3 = "За столом сидят несколько человек"
-text_4 = "Убедительная просьба надеть свои маски в общественном месте"
-text_5 = "Я был разочарован когда услышал его мнение на этот счет"
-text_6 = "Прогноз погоды на сегодня предвещает прекрасный день"
-text_7 = "Я одолжил у него книгу на выходные"
-text_8 = "Будучи хорошо воспитанным человеком он предпочитает не\
- участвовать в подобных мероприятиях"
-text_arr = (text_1, text_2, text_3, text_4, text_5, text_6, text_7, text_8)
-for text_sample in text_arr:
-    mix_words(text_sample)
+def pretty_print_matrix(M):
+    for row in M:
+        print(row)
+    print('\n')
+
+
+def create_cells(M):
+    for row in M:
+        for ind, _ in enumerate(row):
+            random_value = random.randint(1, 10)
+            alive_set = {1, 2}
+            if alive_set.intersection([random_value]):
+                row[ind] = 1
+
+
+def check_neighbours(cur_row, cur_col, M):
+    neighbours_num = 0
+    size = len(M)
+    checking_rows = list(filter(lambda x: -1 < x < size, [cur_row - 1, cur_row, cur_row + 1]))
+    checking_cols = list(filter(lambda x: -1 < x < size, [cur_col - 1, cur_col, cur_col + 1]))
+    for row in checking_rows:
+        for col in checking_cols:
+            if row != cur_row or col != cur_col:
+                neighbours_num += M[row][col]
+    return neighbours_num
+
+
+def cell_updated_state(is_alive, neighbours_num):
+    if neighbours_num < 2 or neighbours_num > 3:
+        return 0
+    elif neighbours_num == 3:
+        return 1
+    elif neighbours_num == 2:
+        if is_alive:
+            return 1
+        else:
+            return 0
+
+
+universe = np.zeros((100, 100))
+create_cells(universe)
+plt.ion()
+while True:
+    updated_universe = copy.deepcopy(universe)
+    for cur_row, row in enumerate(universe):
+        for cur_col, cell in enumerate(row):
+            is_alive = universe[cur_row][cur_col]
+            neighbours_num = check_neighbours(cur_row, cur_col, universe)
+            updated_universe[cur_row][cur_col] = cell_updated_state(is_alive, neighbours_num)
+    universe = updated_universe
+    plt.matshow(universe, fignum=1)
+    plt.draw()
+    plt.pause(0.005)
+    plt.clf()
